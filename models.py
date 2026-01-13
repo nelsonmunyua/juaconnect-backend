@@ -25,37 +25,6 @@ class User(db.Model, SerializerMixin):
     __tablename__ = "users"
 
     id = db.Column(db.Integer(), primary_key=True)
-    full_name = db.Column(db.Text(), nullable=False)
-    phone_number = db.Column(db.Text(), nullable=False, unique=True)
-    email = db.Column(db.Text(), nullable=False, unique=True)
-    password = db.Column(db.Text(), nullable=False)
-    role = db.Column(
-        db.Enum("client", "artisan", "admin"), default="client",
-        nullable=False
-    )
-    is_verified = db.Column(db.Boolean(), default=False)
-    created_at = db.Column(db.DateTime(), server_default=db.func.now())
-    updated_at = db.Column(db.DateTime(), onupdate=db.func.now())
-
-    # Relationships
-    artisan = db.relationship("ArtisanProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-
-    client = db.relationship("ClientProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-
-    # One-to-many : User can create multiple service requests
-    service_requests = db.relationship("ServiceRequest", back_populates="client", foreign_keys="ServiceRequest.client_id")
-
-    # one to many: User (as artisan) can have multiple bookings
-    bookings_as_client =db.relationship("Booking", back_populates="client", foreign_keys="Booking.client_id")
-
-
-# --------------------
-# ARTISAN PROFILE
-# --------------------
-class ArtisanProfile(db.Model, SerializerMixin):
-    __tablename__ = "artisan_profiles"
-
-    id = db.Column(db.Integer(), primary_key=True)
     full_name = db.Column(db.String(255), nullable=False)
     phone_number = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(255), unique=True)
@@ -83,6 +52,49 @@ class ArtisanProfile(db.Model, SerializerMixin):
         "ClientProfile",
         back_populates="user",
         uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+
+# --------------------
+# ARTISAN PROFILE
+# --------------------
+class ArtisanProfile(db.Model, SerializerMixin):
+    __tablename__ = "artisan_profiles"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(
+        db.Integer(),
+        db.ForeignKey("users.id"),
+        nullable=False,
+        unique=True
+    )
+
+    bio = db.Column(db.Text())
+    location = db.Column(db.String(255))
+    hourly_rate = db.Column(db.Integer())
+    years_of_experience = db.Column(db.Integer())
+
+    created_at = db.Column(db.DateTime(), server_default=db.func.now())
+    updated_at = db.Column(db.DateTime(), onupdate=db.func.now())
+
+    user = db.relationship("User", back_populates="artisan_profile")
+
+    skills = db.relationship(
+        "ArtisanSkill",
+        back_populates="artisan",
+        cascade="all, delete-orphan"
+    )
+
+    bookings = db.relationship(
+        "Booking",
+        back_populates="artisan",
+        cascade="all, delete-orphan"
+    )
+
+    availability = db.relationship(
+        "ArtisanAvailability",
+        back_populates="artisan",
         cascade="all, delete-orphan"
     )
 
@@ -322,7 +334,7 @@ class ArtisanAvailability(db.Model, SerializerMixin):
     id = db.Column(db.Integer(), primary_key=True)
     artisan_id = db.Column(
         db.Integer(),
-        db.ForeignKey("users.id"), nullable=False
+        db.ForeignKey("artisan_profiles.id"), nullable=False
     )
     day_of_week = db.Column(
         db.Enum(
