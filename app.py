@@ -4,7 +4,7 @@ from models import db
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///juaconnet.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///juaconnect.db"
 
 app.config["SQLALCHEMY_ECHO"] = True
 
