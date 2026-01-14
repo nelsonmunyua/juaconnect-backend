@@ -1,94 +1,141 @@
 from app import app
 from models import db, User, Service, Booking, Review
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash
+import random
 
-with app.app_context():
-    # Clear existing data
-    Review.query.delete()
-    Booking.query.delete()
-    Service.query.delete()
-    User.query.delete()
-    
-    # Create users
-    artisan1 = User(username='john_carpenter', email='john@example.com', is_artisan=True)
-    artisan2 = User(username='sarah_designer', email='sarah@example.com', is_artisan=True)
-    client1 = User(username='client_mike', email='mike@example.com', is_artisan=False)
-    client2 = User(username='client_anna', email='anna@example.com', is_artisan=False)
-    
-    db.session.add_all([artisan1, artisan2, client1, client2])
-    db.session.commit()
-    
-    # Create services
-    service1 = Service(
-        title='Custom Furniture Making',
-        description='Handcrafted wooden furniture',
-        price=500.00,
-        category='Carpentry',
-        duration=300,
-        artisan_id=artisan1.id
-    )
-    
-    service2 = Service(
-        title='Interior Design Consultation',
-        description='Home interior planning and design',
-        price=150.00,
-        category='Design',
-        duration=120,
-        artisan_id=artisan2.id
-    )
-    
-    service3 = Service(
-        title='Cabinet Installation',
-        description='Kitchen and bathroom cabinet fitting',
-        price=300.00,
-        category='Carpentry',
-        duration=240,
-        artisan_id=artisan1.id
-    )
-    
-    db.session.add_all([service1, service2, service3])
-    db.session.commit()
-    
-    # Create bookings
-    booking1 = Booking(
-        date=datetime.utcnow() + timedelta(days=7),
-        status='confirmed',
-        client_id=client1.id,
-        service_id=service1.id
-    )
-    
-    booking2 = Booking(
-        date=datetime.utcnow() + timedelta(days=14),
-        status='pending',
-        client_id=client2.id,
-        service_id=service2.id
-    )
-    
-    db.session.add_all([booking1, booking2])
-    db.session.commit()
-    
-    # Create reviews (many-to-many)
-    review1 = Review(
-        rating=5,
-        comment='Excellent work! Highly recommended.',
-        client_id=client1.id,
-        artisan_id=artisan1.id,
-        helpful_count=3
-    )
-    
-    review2 = Review(
-        rating=4,
-        comment='Good service, timely completion.',
-        client_id=client2.id,
-        artisan_id=artisan2.id,
-        helpful_count=1
-    )
-    
-    # Associate reviews with services
-    review1.services.append(service1)
-    review2.services.append(service2)
-    
-    db.session.add_all([review1, review2])
-    db.session.commit()
-    
-    print("Database seeded successfully!")
+def seed_data():
+    with app.app_context():
+        print("🌱 Clearing existing data...")
+
+        Review.query.delete()
+        Booking.query.delete()
+        Service.query.delete()
+        User.query.delete()
+
+        db.session.commit()
+
+        print("👤 Creating users...")
+
+        # -------- USERS --------
+        artisan1 = User(
+            name="John Artisan",
+            email="john@artisan.com",
+            role="artisan",
+            password_hash=generate_password_hash("password123")
+        )
+
+        artisan2 = User(
+            name="Mary Artisan",
+            email="mary@artisan.com",
+            role="artisan",
+            password_hash=generate_password_hash("password123")
+        )
+
+        client1 = User(
+            name="Alice Client",
+            email="alice@client.com",
+            role="client",
+            password_hash=generate_password_hash("password123")
+        )
+
+        client2 = User(
+            name="Bob Client",
+            email="bob@client.com",
+            role="client",
+            password_hash=generate_password_hash("password123")
+        )
+
+        db.session.add_all([artisan1, artisan2, client1, client2])
+        db.session.commit()
+
+        print("🛠 Creating services...")
+
+        # -------- SERVICES --------
+        service1 = Service(
+            title="House Plumbing",
+            description="Fixing leaks and pipe installation",
+            price=3000,
+            category="Plumbing",
+            duration=120,
+            artisan_id=artisan1.id
+        )
+
+        service2 = Service(
+            title="Electrical Wiring",
+            description="Full house wiring and repairs",
+            price=5000,
+            category="Electrical",
+            duration=180,
+            artisan_id=artisan2.id
+        )
+
+        service3 = Service(
+            title="Bathroom Renovation",
+            description="Complete bathroom remodeling",
+            price=15000,
+            category="Renovation",
+            duration=480,
+            artisan_id=artisan1.id
+        )
+
+        db.session.add_all([service1, service2, service3])
+        db.session.commit()
+
+        print("📅 Creating bookings...")
+
+        # -------- BOOKINGS --------
+        booking1 = Booking(
+            date=datetime.utcnow() + timedelta(days=2),
+            status="confirmed",
+            notes="Please arrive early",
+            client_id=client1.id,
+            service_id=service1.id
+        )
+
+        booking2 = Booking(
+            date=datetime.utcnow() + timedelta(days=5),
+            status="pending",
+            notes="Need urgent service",
+            client_id=client2.id,
+            service_id=service2.id
+        )
+
+        db.session.add_all([booking1, booking2])
+        db.session.commit()
+
+        print("⭐ Creating reviews...")
+
+        # -------- REVIEWS --------
+        review1 = Review(
+            rating=5,
+            comment="Excellent work! Very professional.",
+            client_id=client1.id,
+            artisan_id=artisan1.id,
+            helpful_count=3
+        )
+
+        review2 = Review(
+            rating=4,
+            comment="Good job, but arrived a bit late.",
+            client_id=client2.id,
+            artisan_id=artisan2.id,
+            helpful_count=1
+        )
+
+        db.session.add_all([review1, review2])
+        db.session.commit()
+
+        print("🔗 Linking reviews to services...")
+
+        # -------- SERVICE_REVIEWS (M2M) --------
+        review1.services.append(service1)
+        review2.services.append(service2)
+
+        db.session.commit()
+
+        print("✅ Database seeded successfully!")
+
+
+if __name__ == "__main__":
+    seed_data()

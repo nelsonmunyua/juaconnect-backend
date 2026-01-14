@@ -15,11 +15,12 @@ class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    role = db.Column(db.Enum("client", "artisan"), default="client")
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
-    is_artisan = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, server_default=db.func.now())
     
     # One-to-Many: Artisan has many services
     services = db.relationship('Service', backref='artisan', lazy=True)
@@ -30,8 +31,14 @@ class User(db.Model, SerializerMixin):
     # Many-to-Many: Users can receive reviews
     reviews_received = db.relationship('Review', backref='artisan', lazy=True, foreign_keys='Review.artisan_id')
     
-    serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
+    # serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
     
+    serialize_rules = (
+    '-services',
+    '-bookings',
+    '-reviews_received',
+    '-reviews_written'
+    )
     @validates('email')
     def validate_email(self, key, email):
         if '@' not in email:
@@ -53,8 +60,8 @@ class Service(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(50))
     duration = db.Column(db.Integer)  # in minutes
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())    
     # Foreign Keys
     artisan_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
@@ -65,7 +72,12 @@ class Service(db.Model, SerializerMixin):
     reviews = db.relationship('Review', secondary=service_reviews, lazy='subquery',
                             backref=db.backref('services', lazy=True))
     
-    serialize_rules = ('-artisan.services', '-bookings.service', '-reviews.services')
+    # serialize_rules = ('-artisan.services', '-bookings.service', '-reviews.services')
+    serialize_rules = (
+    '-artisan',
+    '-bookings',
+    '-reviews'
+    )
     
     @validates('price')
     def validate_price(self, key, price):
@@ -80,7 +92,8 @@ class Booking(db.Model, SerializerMixin):
     date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, confirmed, completed, cancelled
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
     
     # Foreign Keys
     client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -94,7 +107,8 @@ class Review(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
     comment = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at =db.Column(db.DateTime, onupdate=db.func.now())
     
     # Foreign Keys (Many-to-Many relationship through Review)
     client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -103,7 +117,12 @@ class Review(db.Model, SerializerMixin):
     # User-submittable attribute for many-to-many
     helpful_count = db.Column(db.Integer, default=0)  # Users can mark review as helpful
     
-    serialize_rules = ('-client.reviews_received', '-artisan.reviews_received')
+    # serialize_rules = ('-client.reviews_received', '-artisan.reviews_received')
+    serialize_rules = (
+    '-artisan',
+    '-client',
+    '-services'
+   )
     
     @validates('rating')
     def validate_rating(self, key, rating):
