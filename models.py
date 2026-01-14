@@ -2,9 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from sqlalchemy_serializer import SerializerMixin
 from datetime import datetime
-#from sqlalchemy.orm import validates
 
-# Naming convention (same pattern you used)
+# Naming convention
 naming_convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -14,7 +13,6 @@ naming_convention = {
 }
 
 metadata = MetaData(naming_convention=naming_convention)
-
 db = SQLAlchemy(metadata=metadata)
 
 
@@ -53,6 +51,16 @@ class User(db.Model, SerializerMixin):
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan"
+    )
+    
+    serialize_rules = (
+        '-password',
+        '-artisan_profile.user',
+        '-client_profile.user',
+        '-artisan_profile.skills.artisan',
+        '-artisan_profile.bookings.artisan',
+        '-artisan_profile.availability.artisan',
+        '-client_profile.service_requests.client',
     )
 
 
@@ -97,8 +105,18 @@ class ArtisanProfile(db.Model, SerializerMixin):
         back_populates="artisan",
         cascade="all, delete-orphan"
     )
-
-
+    
+    serialize_rules = (
+        '-user.artisan_profile',
+        '-user.client_profile',
+        '-skills.artisan',
+        '-bookings.artisan',
+        '-availability.artisan',
+        '-bookings.service_request.booking',
+        '-bookings.payment.booking',
+        '-bookings.review.booking',
+        '-user.password',
+    )
 
 
 # --------------------
@@ -127,9 +145,14 @@ class ClientProfile(db.Model, SerializerMixin):
         back_populates="client",
         cascade="all, delete-orphan"
     )
-
-
-
+    
+    serialize_rules = (
+        '-user.artisan_profile',
+        '-user.client_profile',
+        '-service_requests.client',
+        '-service_requests.booking.service_request',
+        '-user.password',
+    )
 
 
 # --------------------
@@ -147,8 +170,11 @@ class Skill(db.Model, SerializerMixin):
         back_populates="skill",
         cascade="all, delete-orphan"
     )
-
-
+    
+    serialize_rules = (
+        '-artisans.skill',
+        '-artisans.artisan.skills',
+    )
 
 
 # --------------------
@@ -171,7 +197,14 @@ class ArtisanSkill(db.Model, SerializerMixin):
 
     artisan = db.relationship("ArtisanProfile", back_populates="skills")
     skill = db.relationship("Skill", back_populates="artisans")
-
+    
+    serialize_rules = (
+        '-artisan.skills',
+        '-skill.artisans',
+        '-artisan.user',
+        '-artisan.bookings',
+        '-artisan.availability',
+    )
 
 
 # --------------------
@@ -215,6 +248,15 @@ class ServiceRequest(db.Model, SerializerMixin):
         back_populates="service_request",
         uselist=False
     )
+    
+    serialize_rules = (
+        '-client.service_requests',
+        '-booking.service_request',
+        '-client.user',
+        '-skill.artisans',
+        '-client.user.password',
+    )
+
 
 # --------------------
 # BOOKING
@@ -264,6 +306,17 @@ class Booking(db.Model, SerializerMixin):
         uselist=False,
         cascade="all, delete-orphan"
     )
+    
+    serialize_rules = (
+        '-service_request.booking',
+        '-artisan.bookings',
+        '-payment.booking',
+        '-review.booking',
+        '-service_request.client',
+        '-service_request.client.user',
+        '-artisan.user',
+        '-artisan.user.password',
+    )
 
 
 # --------------------
@@ -295,6 +348,13 @@ class Payment(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime(), server_default=db.func.now())
 
     booking = db.relationship("Booking", back_populates="payment")
+    
+    serialize_rules = (
+        '-booking.payment',
+        '-booking.service_request',
+        '-booking.artisan',
+    )
+
 
 # --------------------
 # REVIEW
@@ -323,6 +383,16 @@ class Review(db.Model, SerializerMixin):
     booking = db.relationship("Booking", back_populates="review")
     client = db.relationship("ClientProfile")
     artisan = db.relationship("ArtisanProfile")
+    
+    serialize_rules = (
+        '-booking.review',
+        '-client.reviews',
+        '-artisan.reviews',
+        '-client.user',
+        '-artisan.user',
+        '-client.user.password',
+        '-artisan.user.password',
+    )
 
 
 # --------------------
@@ -347,8 +417,14 @@ class ArtisanAvailability(db.Model, SerializerMixin):
     start_time = db.Column(db.Time())
     end_time = db.Column(db.Time())
     
-
     artisan = db.relationship("ArtisanProfile", back_populates="availability")
+
+    serialize_rules = (
+        '-artisan.availability',
+        '-artisan.user',
+        '-artisan.skills',
+        '-artisan.bookings',
+    )
 
 
 # --------------------
@@ -366,8 +442,12 @@ class Notification(db.Model, SerializerMixin):
     is_read = db.Column(db.Boolean(), default=False)
     created_at = db.Column(db.DateTime(), server_default=db.func.now())
     
-
     user = db.relationship("User")
+
+    serialize_rules = (
+        '-user',
+        '-user.password',
+    )
 
 
 # --------------------
@@ -389,3 +469,9 @@ class ArtisanVerification(db.Model, SerializerMixin):
     verified_at = db.Column(db.DateTime)
 
     artisan = db.relationship("ArtisanProfile")
+
+    serialize_rules = (
+        '-artisan',
+        '-artisan.user',
+        '-artisan.user.password',
+    )
