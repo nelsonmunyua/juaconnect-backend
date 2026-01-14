@@ -12,17 +12,12 @@ class UsersResource(Resource):
     def get(self):
         users = User.query.all()
 
-        return [u.to_dict(rules=(
-            '-password',
-            '-artisan_profile',
-            '-client_profile',
-        )) for u in users]
+        return [u.to_dict() for u in users]
 
 class UserResource(Resource):
     def get(self, id):
         user = User.query.get(id)
 
-        return user.to_dict(rules=(
-        '-password', '-artisan_profile', '-client_profile'))
+        return user.to_dict()
 
 
