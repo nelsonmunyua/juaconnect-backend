@@ -30,8 +30,14 @@ class User(db.Model, SerializerMixin):
     # Many-to-Many: Users can receive reviews
     reviews_received = db.relationship('Review', backref='artisan', lazy=True, foreign_keys='Review.artisan_id')
     
-    serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
+    # serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
     
+    serialize_rules = (
+    '-services',
+    '-bookings',
+    '-reviews_received',
+    '-reviews_written'
+    )
     @validates('email')
     def validate_email(self, key, email):
         if '@' not in email:
@@ -65,7 +71,12 @@ class Service(db.Model, SerializerMixin):
     reviews = db.relationship('Review', secondary=service_reviews, lazy='subquery',
                             backref=db.backref('services', lazy=True))
     
-    serialize_rules = ('-artisan.services', '-bookings.service', '-reviews.services')
+    # serialize_rules = ('-artisan.services', '-bookings.service', '-reviews.services')
+    serialize_rules = (
+    '-artisan',
+    '-bookings',
+    '-reviews'
+    )
     
     @validates('price')
     def validate_price(self, key, price):
@@ -103,7 +114,12 @@ class Review(db.Model, SerializerMixin):
     # User-submittable attribute for many-to-many
     helpful_count = db.Column(db.Integer, default=0)  # Users can mark review as helpful
     
-    serialize_rules = ('-client.reviews_received', '-artisan.reviews_received')
+    # serialize_rules = ('-client.reviews_received', '-artisan.reviews_received')
+    serialize_rules = (
+    '-artisan',
+    '-client',
+    '-services'
+   )
     
     @validates('rating')
     def validate_rating(self, key, rating):
