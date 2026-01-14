@@ -108,7 +108,7 @@ class Review(db.Model, SerializerMixin):
     rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
     comment = db.Column(db.Text)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at =db.Column(db.DataTime, onupdate=db.func.now())
+    updated_at =db.Column(db.DateTime, onupdate=db.func.now())
     
     # Foreign Keys (Many-to-Many relationship through Review)
     client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
