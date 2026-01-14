@@ -1,8 +1,8 @@
-"""add new database schema
+"""add roles in users
 
-Revision ID: 75c5894ae6ad
+Revision ID: e9b5e799271f
 Revises: 
-Create Date: 2026-01-14 12:37:40.351942
+Create Date: 2026-01-14 13:56:04.846932
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '75c5894ae6ad'
+revision = 'e9b5e799271f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,11 +21,10 @@ def upgrade():
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=80), nullable=False),
-    sa.Column('role', sa.Enum('artisan', 'client'), nullable=True),
+    sa.Column('role', sa.Enum('artisan', 'client'), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
-    sa.Column('is_artisan', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')
