@@ -1,8 +1,8 @@
-"""fixed relationships
+"""Add relationships and fix recursion issues
 
-Revision ID: de5307683ba3
+Revision ID: fbdabe226e48
 Revises: 
-Create Date: 2026-01-13 22:14:09.834445
+Create Date: 2026-01-14 02:15:10.684766
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'de5307683ba3'
+revision = 'fbdabe226e48'
 down_revision = None
 branch_labels = None
 depends_on = None
