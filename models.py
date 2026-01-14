@@ -37,7 +37,8 @@ class User(db.Model, SerializerMixin):
     '-services',
     '-bookings',
     '-reviews_received',
-    '-reviews_written'
+    '-reviews_written',
+    '-password_hash'
     )
     @validates('email')
     def validate_email(self, key, email):
