@@ -3,6 +3,12 @@ from flask_migrate import Migrate
 from models import db
 from flask_restful import Api
 from routes.users import UsersResource, UserResource
+from routes.service import ServicesResource, ServiceResource
+from routes.booking import BookingsResource, BookingResource
+from routes.review import ReviewsResource, ReviewResource
+
+
+
 
 app = Flask(__name__)
 
@@ -24,6 +30,17 @@ def index():
 
 api.add_resource(UsersResource, '/users')
 api.add_resource(UserResource, '/users/<int:id>' )
+
+api.add_resource(ServicesResource, '/services')
+api.add_resource(ServiceResource, '/services/<int:id>')
+
+api.add_resource(BookingsResource, '/bookings')
+api.add_resource(BookingResource, '/bookings/<int:id>')
+
+api.add_resource(ReviewsResource, '/reviews')
+api.add_resource(ReviewResource, '/reviews/<int:id>')
+
+
 
 
 
