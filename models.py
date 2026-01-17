@@ -19,8 +19,20 @@ class User(db.Model, SerializerMixin):
     role = db.Column(db.Enum("client", "artisan"), default="client")
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
+    bio = db.Column(db.Text)
+    profile_picture = db.Column(db.String(200))
+    phone = db.Column(db.String(20))  # Add phone number
+    location = db.Column(db.String(100))  # Add location
+    skills = db.Column(db.Text)  # Comma-separated skills
+    experience_years = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now())
+     # Add artisan-specific fields
+    business_name = db.Column(db.String(100))
+    business_address = db.Column(db.Text)
+    tax_id = db.Column(db.String(50))  # For professional artisans
+    hourly_rate = db.Column(db.Float)
+    
     
     # One-to-Many: Artisan has many services
     services = db.relationship('Service', backref='artisan', lazy=True)
@@ -37,6 +49,7 @@ class User(db.Model, SerializerMixin):
     '-services',
     '-bookings',
     '-reviews_received',
+    '-bookings.client',
     '-reviews_written',
     '-password_hash'
     )
@@ -76,6 +89,7 @@ class Service(db.Model, SerializerMixin):
     # serialize_rules = ('-artisan.services', '-bookings.service', '-reviews.services')
     serialize_rules = (
     '-artisan',
+    '-artisan.services',
     '-bookings',
     '-reviews'
     )
