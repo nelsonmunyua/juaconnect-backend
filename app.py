@@ -6,6 +6,7 @@ from routes.users import UsersResource, UserResource, UserSignup, UserLogin
 from routes.service import ServicesResource, ServiceResource
 from routes.booking import BookingsResource, BookingResource
 from routes.review import ReviewsResource, ReviewResource
+from flask_cors import CORS
 
 
 
@@ -22,7 +23,9 @@ migrate = Migrate(app, db)
 db.init_app(app)
 # initialize flask-restful
 api = Api(app)
-# db.init_app(app)
+
+CORS(app)
+
 @app.route('/')
 def index():
     return {'message' : 'Welcome to juaconnect  backend'}, 200
@@ -30,7 +33,7 @@ def index():
 
 api.add_resource(UsersResource, '/users')
 api.add_resource(UserResource, '/users/<int:id>')
-api.add_resource(UserSignup, '/sing-up')
+api.add_resource(UserSignup, '/sign-up')
 api.add_resource(UserLogin, '/login')
 
 api.add_resource(ServicesResource, '/services')
