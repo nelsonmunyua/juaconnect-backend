@@ -190,12 +190,21 @@ class ArtisanDashboard(Resource):
                 'average_rating': sum(r.rating for r in reviews) / len(reviews) if reviews else 0,
                 'total_revenue': sum(b.service.price for b in completed_bookings)
             }
+            
         }
         
         return make_response(jsonify(dashboard_data), 200)
 
 # ========== REGISTER ROUTES ==========
-
+api.add_resource(Home, '/')
+api.add_resource(Stats, '/stats')
+api.add_resource(Services, '/services')
+api.add_resource(ServiceById, '/services/<int:id>')
+api.add_resource(Users, '/users')
+api.add_resource(Bookings, '/bookings')
+api.add_resource(BookingById, '/bookings/<int:id>')
+api.add_resource(Reviews, '/reviews')
+api.add_resource(ArtisanDashboard, '/artisan/<int:artisan_id>/dashboard')
 # ========== START SERVER ==========
 if __name__ == '__main__':
     with app.app_context():
