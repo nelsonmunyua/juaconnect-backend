@@ -24,7 +24,67 @@ db.init_app(app)
 class Home(Resource):
     def get(self):
         return {'message': 'Artisan Marketplace API', 'status': 'running'}
+class Stats(Resource):
+    def get(self):
+        stats = {
+            'artisans': User.query.filter_by(is_artisan=True).count(),
+            'services': Service.query.filter_by(is_published=True).count(),
+            'bookings': Booking.query.count(),
+            'reviews': Review.query.count()
+        }
+        return make_response(jsonify(stats), 200)
 
+# Services CRUD
+class Services(Resource):
+    def get(self):
+        services = [service.to_dict() for service in Service.query.filter_by(is_published=True).all()]
+        return make_response(jsonify(services), 200)
+    
+    def post(self):
+        data = request.get_json()
+        try:
+            service = Service(
+                title=data['title'],
+                description=data['description'],
+                price=float(data['price']),
+                category=data['category'],
+                duration=int(data['duration']),
+                artisan_id=int(data['artisan_id'])
+            )
+            db.session.add(service)
+            db.session.commit()
+            return make_response(jsonify(service.to_dict()), 201)
+        except Exception as e:
+            return make_response({'error': str(e)}, 400)
+
+class ServiceById(Resource):
+    def get(self, id):
+        service = Service.query.get(id)
+        if not service:
+            return make_response({'error': 'Service not found'}, 404)
+        return make_response(jsonify(service.to_dict()), 200)
+    
+    def patch(self, id):
+        service = Service.query.get(id)
+        if not service:
+            return make_response({'error': 'Service not found'}, 404)
+        
+        data = request.get_json()
+        for attr in data:
+            if hasattr(service, attr):
+                setattr(service, attr, data[attr])
+        
+        db.session.commit()
+        return make_response(jsonify(service.to_dict()), 200)
+    
+    def delete(self, id):
+        service = Service.query.get(id)
+        if not service:
+            return make_response({'error': 'Service not found'}, 404)
+        
+        db.session.delete(service)
+        db.session.commit()
+        return make_response('', 204)
 
 
 # ========== REGISTER ROUTES ==========
