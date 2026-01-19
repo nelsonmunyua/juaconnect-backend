@@ -233,6 +233,8 @@ To test the API endpoints, use:
 - Peter Emu
 - Newton Orina
 
+## Frontend link
+https://github.com/nelsonmunyua/juaconnect-frontend
 
 ## License
 
