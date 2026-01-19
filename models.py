@@ -3,56 +3,28 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from datetime import datetime
 
+
 db = SQLAlchemy()
 
-# Many-to-Many association table for Reviews
-service_reviews = db.Table('service_reviews',
-    db.Column('review_id', db.Integer, db.ForeignKey('reviews.id'), primary_key=True),
-    db.Column('service_id', db.Integer, db.ForeignKey('services.id'), primary_key=True)
-)
 
+# Many-to-Many association table for Reviews
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-    role = db.Column(db.Enum("client", "artisan"), default="client")
+    username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
+    is_artisan = db.Column(db.Boolean, default=False)
     bio = db.Column(db.Text)
-    profile_picture = db.Column(db.String(200))
-    phone = db.Column(db.String(20))  # Add phone number
-    location = db.Column(db.String(100))  # Add location
-    skills = db.Column(db.Text)  # Comma-separated skills
-    experience_years = db.Column(db.Integer)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, server_default=db.func.now())
-     # Add artisan-specific fields
-    business_name = db.Column(db.String(100))
-    business_address = db.Column(db.Text)
-    tax_id = db.Column(db.String(50))  # For professional artisans
-    hourly_rate = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    
-    # One-to-Many: Artisan has many services
     services = db.relationship('Service', backref='artisan', lazy=True)
-    
-    # One-to-Many: Client has many bookings
     bookings = db.relationship('Booking', backref='client', lazy=True, foreign_keys='Booking.client_id')
-    
-    # Many-to-Many: Users can receive reviews
     reviews_received = db.relationship('Review', backref='artisan', lazy=True, foreign_keys='Review.artisan_id')
     
-    # serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
+    serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
     
-    serialize_rules = (
-    '-services',
-    '-bookings',
-    '-reviews_received',
-    '-bookings.client',
-    '-reviews_written',
-    '-password_hash'
-    )
     @validates('email')
     def validate_email(self, key, email):
         if '@' not in email:
@@ -73,26 +45,14 @@ class Service(db.Model, SerializerMixin):
     description = db.Column(db.Text)
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(50))
-    duration = db.Column(db.Integer)  # in minutes
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, onupdate=db.func.now())    
-    # Foreign Keys
-    artisan_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    duration = db.Column(db.Integer)
+    is_published = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # One-to-Many: Service has many bookings
+    artisan_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     bookings = db.relationship('Booking', backref='service', lazy=True)
     
-    # Many-to-Many: Services can have reviews
-    reviews = db.relationship('Review', secondary=service_reviews, lazy='subquery',
-                            backref=db.backref('services', lazy=True))
-    
-    # serialize_rules = ('-artisan.services', '-bookings.service', '-reviews.services')
-    serialize_rules = (
-    '-artisan',
-    '-artisan.services',
-    '-bookings',
-    '-reviews'
-    )
+    serialize_rules = ('-artisan.services', '-bookings.service')
     
     @validates('price')
     def validate_price(self, key, price):
@@ -105,12 +65,10 @@ class Booking(db.Model, SerializerMixin):
     
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, confirmed, completed, cancelled
+    status = db.Column(db.String(20), default='pending')
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Foreign Keys
     client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
     
@@ -120,24 +78,15 @@ class Review(db.Model, SerializerMixin):
     __tablename__ = 'reviews'
     
     id = db.Column(db.Integer, primary_key=True)
-    rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
+    rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at =db.Column(db.DateTime, onupdate=db.func.now())
+    helpful_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Foreign Keys (Many-to-Many relationship through Review)
     client_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     artisan_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
-    # User-submittable attribute for many-to-many
-    helpful_count = db.Column(db.Integer, default=0)  # Users can mark review as helpful
-    
-    # serialize_rules = ('-client.reviews_received', '-artisan.reviews_received')
-    serialize_rules = (
-    '-artisan',
-    '-client',
-    '-services'
-   )
+    serialize_rules = ('-client.reviews_received', '-artisan.reviews_received')
     
     @validates('rating')
     def validate_rating(self, key, rating):
