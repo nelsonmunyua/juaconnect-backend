@@ -86,6 +86,82 @@ class ServiceById(Resource):
         db.session.commit()
         return make_response('', 204)
 
+# Users
+class Users(Resource):
+    def get(self):
+        users = [user.to_dict() for user in User.query.all()]
+        return make_response(jsonify(users), 200)
+
+    def post(self):
+        data = request.get_json()
+        try:
+            user = User(
+                username=data['username'],
+                email=data['email'],
+                is_artisan=bool(data.get('is_artisan', False)),
+                bio=data.get('bio', '')
+            )
+            db.session.add(user)
+            db.session.commit()
+            return make_response(jsonify(user.to_dict()), 201)
+        except Exception as e:
+            return make_response({'error': str(e)}, 400)
+
+# Bookings
+class Bookings(Resource):
+    def get(self):
+        bookings = [booking.to_dict() for booking in Booking.query.all()]
+        return make_response(jsonify(bookings), 200)
+
+    def post(self):
+        data = request.get_json()
+        try:
+            booking = Booking(
+                date=datetime.fromisoformat(data['date'].replace('Z', '+00:00')),
+                notes=data.get('notes', ''),
+                client_id=int(data['client_id']),
+                service_id=int(data['service_id'])
+            )
+            db.session.add(booking)
+            db.session.commit()
+            return make_response(jsonify(booking.to_dict()), 201)
+        except Exception as e:
+            return make_response({'error': str(e)}, 400)
+
+class BookingById(Resource):
+    def patch(self, id):
+        booking = Booking.query.get(id)
+        if not booking:
+            return make_response({'error': 'Booking not found'}, 404)
+
+        data = request.get_json()
+        if 'status' in data:
+            booking.status = data['status']
+
+        db.session.commit()
+        return make_response(jsonify(booking.to_dict()), 200)
+
+# Reviews
+class Reviews(Resource):
+    def get(self):
+        reviews = [review.to_dict() for review in Review.query.all()]
+        return make_response(jsonify(reviews), 200)
+
+    def post(self):
+        data = request.get_json()
+        try:
+            review = Review(
+                rating=int(data['rating']),
+                comment=data.get('comment', ''),
+                client_id=int(data['client_id']),
+                artisan_id=int(data['artisan_id'])
+            )
+            db.session.add(review)
+            db.session.commit()
+            return make_response(jsonify(review.to_dict()), 201)
+        except Exception as e:
+            return make_response({'error': str(e)}, 400)
+
 
 # ========== REGISTER ROUTES ==========
 
