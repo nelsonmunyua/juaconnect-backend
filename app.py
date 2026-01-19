@@ -163,6 +163,37 @@ class Reviews(Resource):
             return make_response({'error': str(e)}, 400)
 
 
+# Artisan Dashboard
+class ArtisanDashboard(Resource):
+    def get(self, artisan_id):
+        artisan = User.query.get(artisan_id)
+        if not artisan or not artisan.is_artisan:
+            return make_response({'error': 'Artisan not found'}, 404)
+        
+        services = Service.query.filter_by(artisan_id=artisan_id).all()
+        bookings = Booking.query.filter(
+            Booking.service_id.in_([s.id for s in services])
+        ).all()
+        reviews = Review.query.filter_by(artisan_id=artisan_id).all()
+        
+        completed_bookings = [b for b in bookings if b.status == 'completed']
+        
+        dashboard_data = {
+            'artisan': artisan.to_dict(),
+            'services': [s.to_dict() for s in services],
+            'bookings': [b.to_dict() for b in bookings],
+            'reviews': [r.to_dict() for r in reviews],
+            'stats': {
+                'total_services': len(services),
+                'total_bookings': len(bookings),
+                'pending_bookings': len([b for b in bookings if b.status == 'pending']),
+                'average_rating': sum(r.rating for r in reviews) / len(reviews) if reviews else 0,
+                'total_revenue': sum(b.service.price for b in completed_bookings)
+            }
+        }
+        
+        return make_response(jsonify(dashboard_data), 200)
+
 # ========== REGISTER ROUTES ==========
 
 # ========== START SERVER ==========
