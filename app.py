@@ -3,6 +3,8 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from resources.user import Signup
+from flask_bcrypt import Bcrypt
 
 from datetime import datetime
 import os
@@ -12,14 +14,21 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///artisan.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+app.config["SQLALCHEMY_ECHO"] = True
 
 
 
 CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
 
 migrate = Migrate(app, db)
+
+# initialize flask_restful
 api = Api(app)
+# initialize db
 db.init_app(app)
+
+# initialize bcrypt
+bcrypt = Bcrypt(app)
 
 class Home(Resource):
     def get(self):
@@ -196,6 +205,7 @@ class ArtisanDashboard(Resource):
         return make_response(jsonify(dashboard_data), 200)
 
 # ========== REGISTER ROUTES ==========
+api.add_resource(Signup, '/signup')
 api.add_resource(Home, '/')
 api.add_resource(Stats, '/stats')
 api.add_resource(Services, '/services')

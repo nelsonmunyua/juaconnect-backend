@@ -1,8 +1,8 @@
-"""database update on
+"""add phone, role and password column in user model
 
-Revision ID: 4f24c7b40472
+Revision ID: 21273961af54
 Revises: 
-Create Date: 2026-01-18 19:17:38.356186
+Create Date: 2026-01-22 00:27:45.342891
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4f24c7b40472'
+revision = '21273961af54'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,12 +22,14 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=80), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
-    sa.Column('password_hash', sa.String(length=128), nullable=True),
-    sa.Column('is_artisan', sa.Boolean(), nullable=True),
+    sa.Column('phone', sa.String(length=120), nullable=False),
+    sa.Column('password', sa.String(length=128), nullable=False),
+    sa.Column('role', sa.Enum('artisan', 'client', 'admin'), nullable=False),
     sa.Column('bio', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('phone'),
     sa.UniqueConstraint('username')
     )
     op.create_table('reviews',
