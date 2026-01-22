@@ -14,8 +14,10 @@ class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    is_artisan = db.Column(db.Boolean, default=False)
+    phone = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+    #is_artisan = db.Column(db.Boolean, default=False)
+    role = db.Column(db.Enum('artisan', 'client', 'admin'), default='client', nullable=False)
     bio = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -23,7 +25,7 @@ class User(db.Model, SerializerMixin):
     bookings = db.relationship('Booking', backref='client', lazy=True, foreign_keys='Booking.client_id')
     reviews_received = db.relationship('Review', backref='artisan', lazy=True, foreign_keys='Review.artisan_id')
     
-    serialize_rules = ('-password_hash', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
+    serialize_rules = ('-password', '-services.artisan', '-bookings.client', '-reviews_received.artisan')
     
     @validates('email')
     def validate_email(self, key, email):
